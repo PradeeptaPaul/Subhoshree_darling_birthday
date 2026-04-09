@@ -552,31 +552,191 @@ body { cursor: none; }
 .tl-title { font-family: 'Caveat', cursive; font-size: 1.3rem; color: var(--dark); font-weight: 700; margin-bottom: 0.3rem; }
 .tl-desc { font-family: 'Nunito', sans-serif; font-size: 0.88rem; color: var(--mid); line-height: 1.7; }
 
-/* ════════════ LOVE LETTER ════════════ */
+/* ════════════ LOVE LETTER — ENVELOPE ANIMATION ════════════ */
 #letter-section {
   position: relative; z-index: 1; padding: 6rem 2rem;
   background: linear-gradient(135deg, #FFF5E8, #FFEEF6, #F5E8FF);
   text-align: center;
 }
-.envelope-outer { max-width: 720px; margin: 3rem auto 0; position: relative; cursor: pointer; }
-.envelope-flap {
-  width: 100%;
-  background: linear-gradient(135deg, #FFB3C6, #FFCBA4);
-  border-radius: 12px 12px 0 0; padding: 1.5rem 2rem;
-  display: flex; align-items: center; justify-content: center; gap: 0.8rem;
-  position: relative; overflow: hidden;
+
+/* ── Perspective scene ── */
+.env-scene {
+  max-width: 540px;
+  margin: 3rem auto 0;
 }
-.envelope-flap::before {
+
+/* ── Envelope wrapper ── */
+.envelope {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.65 / 1;
+  cursor: pointer;
+  perspective: 1100px;
+  transition: transform 0.35s ease;
+}
+.envelope:not(.is-open):hover { transform: translateY(-7px) scale(1.025); }
+.envelope.is-open { cursor: default; }
+
+/* ── Envelope body ── */
+.env-body {
+  position: absolute; inset: 0;
+  background: linear-gradient(145deg, #FFE8F0 0%, #FFD6E4 45%, #FFCBA4 100%);
+  border-radius: 8px;
+  box-shadow: 8px 8px 0 var(--pink2), 0 24px 60px rgba(200,80,130,0.22);
+}
+.env-body::after {
+  content: '';
+  position: absolute; inset: 0; border-radius: 8px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 55%);
+  pointer-events: none;
+}
+
+/* ── Letter paper preview (inside envelope) ── */
+.env-paper {
+  position: absolute;
+  bottom: 5%; left: 15%; right: 15%;
+  height: 82%;
+  background: #FFFEF2;
+  border: 1.5px solid rgba(255,155,185,0.38);
+  border-radius: 4px 4px 0 0;
+  z-index: 2;
+  transform: translateY(0%);
+  transition: transform 1.15s cubic-bezier(0.34, 1.56, 0.64, 1) 0.55s;
+  overflow: hidden;
+}
+.env-paper::before {
   content: '';
   position: absolute; inset: 0;
-  background: repeating-linear-gradient(45deg, rgba(255,255,255,0.08) 0, rgba(255,255,255,0.08) 10px, transparent 10px, transparent 20px);
+  background-image: repeating-linear-gradient(
+    transparent, transparent 18px,
+    rgba(255,150,185,0.28) 18px, rgba(255,150,185,0.28) 19px
+  );
+  background-position: 0 10px;
 }
-.envelope-flap span { font-family: 'Caveat', cursive; font-size: 1.3rem; color: white; font-weight: 700; text-shadow: 1px 1px 3px rgba(0,0,0,0.12); position: relative; z-index: 1; }
-.e-dots { display: flex; gap: 6px; position: relative; z-index: 1; }
-.e-dots div { width: 11px; height: 11px; border-radius: 50%; background: rgba(255,255,255,0.7); }
+.env-paper::after {
+  content: '💌';
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  font-size: 2.8rem; opacity: 0.1;
+}
+/* Letter rises when opening */
+.envelope.is-opening .env-paper,
+.envelope.is-open    .env-paper { transform: translateY(-60%); }
+
+/* ── Side fold overlays (cover the letter inside) ── */
+.env-fold-l {
+  position: absolute; top: 0; left: 0;
+  width: 52%; height: 100%;
+  clip-path: polygon(0 0, 0 100%, 100% 50%);
+  background: linear-gradient(162deg, #FFD8E8, #FFCBA4);
+  z-index: 3; border-radius: 8px 0 0 8px;
+}
+.env-fold-r {
+  position: absolute; top: 0; right: 0;
+  width: 52%; height: 100%;
+  clip-path: polygon(100% 0, 100% 100%, 0 50%);
+  background: linear-gradient(198deg, #FFD8E8, #FFCBA4);
+  z-index: 3; border-radius: 0 8px 8px 0;
+}
+.env-fold-b {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 56%;
+  clip-path: polygon(0 100%, 100% 100%, 50% 0%);
+  background: linear-gradient(175deg, #FFCBA4, #FFB3C6);
+  border-radius: 0 0 8px 8px;
+  z-index: 4;
+}
+
+/* ── Top flap rectangle (rotates in 3D) ── */
+.env-flap {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 57%;
+  z-index: 6;
+  transform-origin: top center;
+  transform: rotateX(0deg);
+  transition: transform 0.88s cubic-bezier(0.4, 0, 0.2, 1);
+  backface-visibility: hidden;
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+}
+/* Triangle shape inside the flap via ::before */
+.env-flap::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(158deg, #FFB3C6 0%, #FFCBA4 100%);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+.env-flap::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255,255,255,0.09) 0, rgba(255,255,255,0.09) 5px,
+    transparent 5px, transparent 11px
+  );
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+/* Flap opens: rotates backward */
+.envelope.is-opening .env-flap,
+.envelope.is-open    .env-flap { transform: rotateX(-178deg); }
+
+/* ── Wax seal (heart, pulsing) ── */
+.env-seal {
+  position: absolute; top: 47%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 58px; height: 58px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #FF6B9D 0%, #C2185B 100%);
+  border: 3px solid rgba(255,255,255,0.72);
+  box-shadow: 0 5px 22px rgba(255,77,126,0.52), inset 0 2px 5px rgba(255,255,255,0.22);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.55rem; z-index: 8;
+  transition: transform 0.48s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease;
+  animation: sealGlow 2.3s ease-in-out infinite;
+}
+.envelope.is-opening .env-seal,
+.envelope.is-open    .env-seal {
+  transform: translate(-50%, -50%) scale(0) rotate(360deg);
+  opacity: 0; animation: none;
+}
+@keyframes sealGlow {
+  0%,100% { box-shadow: 0 5px 22px rgba(255,77,126,0.52), 0 0 0 0   rgba(255,77,126,0.28); }
+  50%     { box-shadow: 0 5px 22px rgba(255,77,126,0.52), 0 0 0 10px rgba(255,77,126,0);   }
+}
+
+/* ── Envelope fade-out once letter is shown ── */
+.envelope.do-fadeout {
+  animation: envFadeOut 0.65s ease forwards;
+  pointer-events: none;
+}
+@keyframes envFadeOut {
+  to { opacity: 0; transform: scale(0.88) translateY(8px); }
+}
+
+/* ── "Click to open" hint ── */
+.open-hint {
+  margin-top: 1.3rem;
+  font-family: 'Caveat', cursive; font-size: 1.2rem;
+  color: var(--mid); opacity: 0.72;
+  animation: bounce 2s ease infinite;
+  transition: opacity 0.4s ease;
+}
+.open-hint.gone { opacity: 0; pointer-events: none; animation: none; }
+
+/* ── Expanded notebook letter ── */
+.letter-expanded {
+  display: none;
+  opacity: 0;
+  transform: translateY(38px) scale(0.96);
+  transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+  margin-top: 2.5rem;
+}
+.letter-expanded.visible {
+  opacity: 1; transform: none; pointer-events: auto;
+}
 .notebook {
   background: #FFFEF0; border: 2.5px solid var(--pink3);
-  border-top: none; border-radius: 0 0 12px 12px;
+  border-radius: 12px;
   box-shadow: 6px 6px 0 var(--pink2), 0 20px 55px rgba(200,100,130,0.15);
   overflow: hidden; position: relative;
 }
@@ -1113,27 +1273,41 @@ footer {
     <h2 class="section-title">A Letter for our cuteee little princess 🌸</h2>
     <p class="section-sub">some things are too big for a text, so here's a whole letter ✨</p>
 
-    <div class="envelope-outer">
-      <div class="envelope-flap">
-        <div class="e-dots"><div></div><div></div><div></div></div>
-        <span>💌 open with all the love in the world ✨</span>
+    <div class="env-scene">
+
+      <!-- ══ Sealed envelope (click to open) ══ -->
+      <div class="envelope" id="envelope" onclick="openLetter()">
+        <div class="env-body"></div>
+        <div class="env-paper"></div>
+        <div class="env-fold-l"></div>
+        <div class="env-fold-r"></div>
+        <div class="env-fold-b"></div>
+        <div class="env-flap"></div>
+        <div class="env-seal">💖</div>
       </div>
-      <div class="notebook">
-        <div class="notebook-lines">
-          <div class="letter-doodles">
-            <span>🌸</span><span>💕</span><span>⭐</span><span>🌺</span><span>✨</span><span>🎀</span><span>💖</span><span>🌸</span>
+
+      <p class="open-hint" id="open-hint">✉️ click the envelope to open~</p>
+
+      <!-- ══ Full letter revealed after opening ══ -->
+      <div class="letter-expanded" id="letter-expanded">
+        <div class="notebook">
+          <div class="notebook-lines">
+            <div class="letter-doodles">
+              <span>🌸</span><span>💕</span><span>⭐</span><span>🌺</span><span>✨</span><span>🎀</span><span>💖</span><span>🌸</span>
+            </div>
+            <div class="letter-text">
+              <p>My Dearest & Cutest Subhashree, 💕</p>
+              <p>There is genuinely something magical in April 10th . It's not just a date on a calendar — it's the day the universe decided the world needed YOU cutiee 🎀 in it. And honestly, what a decision that was. 🌸</p>
+              <p>There's something about you that I can't quite explain — the way you are like a cute little girl 🥰. You magic 🪄 is so strong that u turned a boy into a man . Being with you feels like the best chapter I've ever been part of ✨</p>
+              <p>You are cute in the way that makes hearts do little flips. You are kind in the way that makes people feel truly seen. You are silly in the way that makes life so much lighter. And you are strong in ways that even you probably don't fully notice. 💖</p>
+              <p>On this 24th birthday, we hope you feel the full weight of how loved you are. Not just by both of us , but by every person whose life is better because you exist in it. You are genuinely one of a kind, Subhashree — and the world is so much better with you in it. 🎀</p>
+              <p>Happy Birthday to our absolute favourite person. Here's to 24, to every adventure ahead, and we wish you stay happy and prosperous always  🌸🎂✨🌸🎂✨</p>
+            </div>
+            <div class="letter-sig">— with lots of love from Anchal Mama & Pradeepta 💕🎀</div>
           </div>
-          <div class="letter-text">
-            <p>My Dearest & Cutest Subhashree, 💕</p>
-            <p>There is genuinely something magical in April 10th . It's not just a date on a calendar — it's the day the universe decided the world needed YOU cutiee 🎀 in it. And honestly, what a decision that was. 🌸</p>
-            <p>There's something about you that I can't quite explain — the way you are like a cute little girl 🥰. You magic 🪄 is so strong that u turned a boy into a man . Being with you feels like the best chapter I've ever been part of ✨</p>
-            <p>You are cute in the way that makes hearts do little flips. You are kind in the way that makes people feel truly seen. You are silly in the way that makes life so much lighter. And you are strong in ways that even you probably don't fully notice. 💖</p>
-            <p>On this 24th birthday, we hope you feel the full weight of how loved you are. Not just by both of us , but by every person whose life is better because you exist in it. You are genuinely one of a kind, Subhashree — and the world is so much better with you in it. 🎀</p>
-            <p>Happy Birthday to our absolute favourite person. Here's to 24, to every adventure ahead, and we wish you stay happy and prosperous always  🌸🎂✨🌸🎂✨</p>
-          </div>
-          <div class="letter-sig">— with lots of love from Anchal Mama & Pradeepta 💕🎀</div>
         </div>
       </div>
+
     </div>
   </div>
 </section>
@@ -1400,6 +1574,37 @@ document.addEventListener('click', e => {
 if (isBirthday()) {
   setTimeout(launchConfetti, 1800);
   setTimeout(launchConfetti, 6500);
+}
+
+/* ── LETTER ENVELOPE ANIMATION ── */
+function openLetter() {
+  const env = document.getElementById('envelope');
+  if (env.classList.contains('is-opening')) return; // prevent double-click
+
+  // Stage 1: seal pops, flap lifts, letter paper rises
+  env.classList.add('is-opening');
+  document.getElementById('open-hint').classList.add('gone');
+
+  // Stage 2: ~1.8s later — fade out envelope, reveal full letter
+  setTimeout(() => {
+    env.classList.add('is-open');
+    env.classList.add('do-fadeout');
+
+    const expanded = document.getElementById('letter-expanded');
+    expanded.style.display = 'block';          // pull out of display:none
+    requestAnimationFrame(() => {              // next frame: begin transition
+      requestAnimationFrame(() => {
+        expanded.classList.add('visible');
+      });
+    });
+
+    // Once envelope fully faded, collapse its space
+    setTimeout(() => {
+      env.style.cssText = 'display:none';
+      document.getElementById('open-hint').style.display = 'none';
+    }, 700);
+
+  }, 1850);
 }
 
 /* ══════════════════════════════════════
